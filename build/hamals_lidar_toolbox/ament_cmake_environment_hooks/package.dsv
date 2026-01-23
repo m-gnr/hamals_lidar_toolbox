@@ -1,0 +1,4 @@
+source;share/hamals_lidar_toolbox/local_setup.bash
+source;share/hamals_lidar_toolbox/local_setup.dsv
+source;share/hamals_lidar_toolbox/local_setup.sh
+source;share/hamals_lidar_toolbox/local_setup.zsh
