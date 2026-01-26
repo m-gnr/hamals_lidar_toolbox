@@ -1,5 +1,4 @@
-#include "LaserScanAdapter.hpp"
-
+#include "hamals_lidar_toolbox/ros/adapters/LaserScanAdapter.hpp"
 #include <stdexcept>
 
 namespace hamals_lidar_toolbox

@@ -15,6 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(hamals_lidar_msgs REQUIRED)
+
 
 # =========================
 # Core library (ROS'suz)
@@ -32,10 +34,6 @@ target_include_directories(hamals_lidar_toolbox_core
     include
 )
 
-ament_target_dependencies(hamals_lidar_toolbox_core
-  rclcpp
-)
-
 # =========================
 # ROS adapter library
 # =========================
@@ -46,6 +44,8 @@ add_library(hamals_lidar_toolbox_ros
 target_include_directories(hamals_lidar_toolbox_ros
   PUBLIC
     include
+  PRIVATE
+    ros
 )
 
 ament_target_dependencies(hamals_lidar_toolbox_ros
@@ -67,6 +67,7 @@ add_executable(scan_processor_node
 ament_target_dependencies(scan_processor_node
   rclcpp
   sensor_msgs
+  hamals_lidar_msgs
 )
 
 target_link_libraries(scan_processor_node

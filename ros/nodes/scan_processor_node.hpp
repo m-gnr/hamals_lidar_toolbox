@@ -3,7 +3,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 
-#include "../adapters/LaserScanAdapter.hpp"
+#include "hamals_lidar_toolbox/ros/adapters/LaserScanAdapter.hpp"
+
 
 
 #include "hamals_lidar_toolbox/core/ScanSanitizer.hpp"
@@ -11,8 +12,10 @@
 #include "hamals_lidar_toolbox/core/ScanMetrics.hpp"
 #include "hamals_lidar_toolbox/core/ObstacleDetector.hpp"
 
+#include "hamals_lidar_msgs/msg/obstacle_state.hpp"
 
 #include <memory>
+#include <vector>
 
 /**
  * @brief /scan verisini core pipeline'a baglayan ROS2 node'u
@@ -33,11 +36,16 @@ public:
     /**
      * @brief ScanProcessorNode constructor
      */
-    explicit ScanProcessorNode(const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
+    explicit ScanProcessorNode(
+        const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
 
 private:
+    /**
+     * @brief Varsayilan bolge tanimlarini olusturur
+     */
     std::vector<hamals_lidar_toolbox::core::ScanSegmenter::Region>
     createDefaultRegions() const;
+
     /**
      * @brief /scan callback fonksiyonu
      */
@@ -47,10 +55,12 @@ private:
     // ROS iletisim bilesenleri
     // =========================
 
-    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_subscriber_;
+    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr
+        scan_subscriber_;
 
-    // (ileride eklenecek)
-    // rclcpp::Publisher<...>::SharedPtr obstacle_publisher_;
+    rclcpp::Publisher<
+        hamals_lidar_msgs::msg::ObstacleState
+    >::SharedPtr obstacle_state_pub_;
 
     // =========================
     // Core pipeline bilesenleri
@@ -59,5 +69,4 @@ private:
     hamals_lidar_toolbox::core::ScanSanitizer sanitizer_;
     hamals_lidar_toolbox::core::ScanSegmenter segmenter_;
     hamals_lidar_toolbox::core::ObstacleDetector obstacle_detector_;
-
 };
