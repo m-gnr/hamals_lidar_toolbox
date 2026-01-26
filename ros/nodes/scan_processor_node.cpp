@@ -75,7 +75,7 @@ void ScanProcessorNode::scanCallback(
     // 7️⃣ Publish
     obstacle_state_pub_->publish(msg_out);
 
-    // Debug log (LiDAR-only, kalabilir)
+   /* // Debug log (LiDAR-only, kalabilir)
     for (const auto& [region, state] : obstacle_map)
     {
         RCLCPP_INFO(
@@ -85,7 +85,7 @@ void ScanProcessorNode::scanCallback(
             state.has_obstacle ? "YES" : "NO",
             state.min_distance
         );
-    }
+    }*/
 }
 
 std::vector<hamals_lidar_toolbox::core::ScanSegmenter::Region>
