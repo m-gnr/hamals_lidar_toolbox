@@ -1,55 +1,80 @@
 #include "scan_processor_node.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/laser_scan.hpp>
-
-#include "hamals_lidar_msgs/msg/obstacle_state.hpp"
-#include "hamals_lidar_msgs/msg/obstacle_region_state.hpp"
-
-#include "hamals_lidar_toolbox/ros/adapters/LaserScanAdapter.hpp"
-#include "hamals_lidar_toolbox/core/ScanMetrics.hpp"
-
 using std::placeholders::_1;
 
 ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
-: rclcpp::Node("scan_processor_node", options),
-  sanitizer_(0.05, 30.0),                 // min_range, max_range
-  segmenter_(createDefaultRegions())      // region definitions
+: rclcpp::Node("scan_processor_node", options)
 {
-    // Danger distance (LiDAR-only, sabit)
-    const double danger_distance = 0.5;
-    obstacle_detector_.setDangerDistance(danger_distance);
+    // =========================
+    // 1️⃣ PARAMETRE DECLARE
+    // =========================
+    this->declare_parameter<double>("danger_distance");
+    this->declare_parameter<double>("scan.min_range");
+    this->declare_parameter<double>("scan.max_range");
 
-    // /scan subscriber
-    scan_subscriber_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-        "/scan",
-        rclcpp::SensorDataQoS(),
-        std::bind(&ScanProcessorNode::scanCallback, this, _1)
-    );
+    this->declare_parameter<double>("regions.front.min");
+    this->declare_parameter<double>("regions.front.max");
+    this->declare_parameter<double>("regions.left.min");
+    this->declare_parameter<double>("regions.left.max");
+    this->declare_parameter<double>("regions.right.min");
+    this->declare_parameter<double>("regions.right.max");
+    this->declare_parameter<double>("regions.rear.min");
+    this->declare_parameter<double>("regions.rear.max");
 
-    // /scan/obstacle_state publisher
+    // =========================
+    // 2️⃣ PARAMETRE OKU
+    // =========================
+    double danger_distance =
+        this->get_parameter("danger_distance").as_double();
+
+    double min_range =
+        this->get_parameter("scan.min_range").as_double();
+
+    double max_range =
+        this->get_parameter("scan.max_range").as_double();
+
+    // =========================
+    // 3️⃣ CORE NESNELERİNİ OLUŞTUR
+    // =========================
+    sanitizer_ = std::make_unique<
+        hamals_lidar_toolbox::core::ScanSanitizer>(min_range, max_range);
+
+    segmenter_ = std::make_unique<
+        hamals_lidar_toolbox::core::ScanSegmenter>(createRegionsFromParams());
+
+    obstacle_detector_ = std::make_unique<
+        hamals_lidar_toolbox::core::ObstacleDetector>();
+
+    obstacle_detector_->setDangerDistance(danger_distance);
+
+    // =========================
+    // 4️⃣ ROS I/O
+    // =========================
+    scan_subscriber_ =
+        this->create_subscription<sensor_msgs::msg::LaserScan>(
+            "/scan",
+            rclcpp::SensorDataQoS(),
+            std::bind(&ScanProcessorNode::scanCallback, this, _1));
+
     obstacle_state_pub_ =
         this->create_publisher<hamals_lidar_msgs::msg::ObstacleState>(
-            "/scan/obstacle_state",
-            10
-        );
+            "/scan/obstacle_state", 10);
 
-    RCLCPP_INFO(this->get_logger(), "ScanProcessorNode started.");
+    RCLCPP_INFO(this->get_logger(), "ScanProcessorNode started (config-driven).");
 }
 
 void ScanProcessorNode::scanCallback(
     const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
     // 1️⃣ ROS -> Core
-    hamals_lidar_toolbox::core::ScanData scan =
+    auto scan =
         hamals_lidar_toolbox::ros::adapters::LaserScanAdapter::fromRosMessage(*msg);
 
     // 2️⃣ Sanitize
-    hamals_lidar_toolbox::core::ScanData clean_scan =
-        sanitizer_.sanitize(scan);
+    auto clean_scan = sanitizer_->sanitize(scan);
 
     // 3️⃣ Segment
-    auto segments = segmenter_.segment(clean_scan);
+    auto segments = segmenter_->segment(clean_scan);
 
     // 4️⃣ Metrics
     auto metrics =
@@ -57,10 +82,10 @@ void ScanProcessorNode::scanCallback(
 
     // 5️⃣ Obstacle detection
     auto obstacle_map =
-        obstacle_detector_.detect(metrics);
+        obstacle_detector_->detect(metrics);
 
-    // 6️⃣ Core -> ROS msg
-    hamals_lidar_msgs::msg::ObstacleState msg_out;
+    // 6️⃣ ROS msg
+    hamals_lidar_msgs::msg::ObstacleState out_msg;
 
     for (const auto& [region, state] : obstacle_map)
     {
@@ -68,40 +93,43 @@ void ScanProcessorNode::scanCallback(
         r.region = region;
         r.has_obstacle = state.has_obstacle;
         r.min_distance = state.min_distance;
-
-        msg_out.regions.push_back(r);
+        out_msg.regions.push_back(r);
     }
 
-    // 7️⃣ Publish
-    obstacle_state_pub_->publish(msg_out);
-
-   /* // Debug log (LiDAR-only, kalabilir)
-    for (const auto& [region, state] : obstacle_map)
-    {
-        RCLCPP_INFO(
-            this->get_logger(),
-            "Region: %s | obstacle: %s | min_distance: %.2f",
-            region.c_str(),
-            state.has_obstacle ? "YES" : "NO",
-            state.min_distance
-        );
-    }*/
+    obstacle_state_pub_->publish(out_msg);
 }
 
 std::vector<hamals_lidar_toolbox::core::ScanSegmenter::Region>
-ScanProcessorNode::createDefaultRegions() const
+ScanProcessorNode::createRegionsFromParams() const
 {
     using Region = hamals_lidar_toolbox::core::ScanSegmenter::Region;
 
     return {
-        {"front", -0.52,  0.52},   // ~ -30° .. 30°
-        {"left",   0.52,  2.09},   // ~ 30° .. 120°
-        {"right", -2.09, -0.52},   // ~ -120° .. -30°
-        {"rear",   2.09,  3.14}    // ~ 120° .. 180°
+        {
+            "front",
+            this->get_parameter("regions.front.min").as_double(),
+            this->get_parameter("regions.front.max").as_double()
+        },
+        {
+            "left",
+            this->get_parameter("regions.left.min").as_double(),
+            this->get_parameter("regions.left.max").as_double()
+        },
+        {
+            "right",
+            this->get_parameter("regions.right.min").as_double(),
+            this->get_parameter("regions.right.max").as_double()
+        },
+        {
+            "rear",
+            this->get_parameter("regions.rear.min").as_double(),
+            this->get_parameter("regions.rear.max").as_double()
+        }
     };
 }
 
-int main(int argc, char** argv)
+
+int main(int argc, char ** argv)
 {
     rclcpp::init(argc, argv);
 
@@ -112,3 +140,4 @@ int main(int argc, char** argv)
     rclcpp::shutdown();
     return 0;
 }
+

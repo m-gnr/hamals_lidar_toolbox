@@ -5,8 +5,6 @@
 
 #include "hamals_lidar_toolbox/ros/adapters/LaserScanAdapter.hpp"
 
-
-
 #include "hamals_lidar_toolbox/core/ScanSanitizer.hpp"
 #include "hamals_lidar_toolbox/core/ScanSegmenter.hpp"
 #include "hamals_lidar_toolbox/core/ScanMetrics.hpp"
@@ -41,10 +39,10 @@ public:
 
 private:
     /**
-     * @brief Varsayilan bolge tanimlarini olusturur
+     * @brief Config parametrelerinden bolge tanimlarini olusturur
      */
     std::vector<hamals_lidar_toolbox::core::ScanSegmenter::Region>
-    createDefaultRegions() const;
+    createRegionsFromParams() const;
 
     /**
      * @brief /scan callback fonksiyonu
@@ -64,9 +62,10 @@ private:
 
     // =========================
     // Core pipeline bilesenleri
+    // (parametre okunduktan sonra olusturulur)
     // =========================
 
-    hamals_lidar_toolbox::core::ScanSanitizer sanitizer_;
-    hamals_lidar_toolbox::core::ScanSegmenter segmenter_;
-    hamals_lidar_toolbox::core::ObstacleDetector obstacle_detector_;
+    std::unique_ptr<hamals_lidar_toolbox::core::ScanSanitizer> sanitizer_;
+    std::unique_ptr<hamals_lidar_toolbox::core::ScanSegmenter> segmenter_;
+    std::unique_ptr<hamals_lidar_toolbox::core::ObstacleDetector> obstacle_detector_;
 };

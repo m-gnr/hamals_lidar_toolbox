@@ -1,0 +1,23 @@
+scan_processor_node:
+  ros__parameters:
+
+    # Genel eşikler
+    danger_distance: 0.7
+
+    scan:
+      min_range: 0.05
+      max_range: 30.0
+
+    regions:
+      front:
+        min: -0.52
+        max:  0.52
+      left:
+        min:  0.52
+        max:  2.09
+      right:
+        min: -2.09
+        max: -0.52
+      rear:
+        min:  2.09
+        max:  3.14
