@@ -21,3 +21,6 @@ scan_processor_node:
       rear:
         min:  2.09
         max:  3.14
+    
+    debug:
+      enable_rviz: true

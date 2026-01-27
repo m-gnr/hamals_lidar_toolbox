@@ -15,8 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(hamals_lidar_msgs REQUIRED)
-
 
 # =========================
 # Core library (ROS'suz)
@@ -35,10 +35,11 @@ target_include_directories(hamals_lidar_toolbox_core
 )
 
 # =========================
-# ROS adapter library
+# ROS library (adapter + rviz)
 # =========================
 add_library(hamals_lidar_toolbox_ros
   ros/adapters/LaserScanAdapter.cpp
+  ros/rviz/RvizDebugPublisher.cpp
 )
 
 target_include_directories(hamals_lidar_toolbox_ros
@@ -51,6 +52,8 @@ target_include_directories(hamals_lidar_toolbox_ros
 ament_target_dependencies(hamals_lidar_toolbox_ros
   rclcpp
   sensor_msgs
+  visualization_msgs
+  geometry_msgs
 )
 
 target_link_libraries(hamals_lidar_toolbox_ros
@@ -111,7 +114,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-# =========================
-# Ament package
-# =========================
 ament_package()

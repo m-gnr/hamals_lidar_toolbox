@@ -21,6 +21,8 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
     this->declare_parameter<double>("regions.rear.min");
     this->declare_parameter<double>("regions.rear.max");
 
+    this->declare_parameter<bool>("debug.enable_rviz", false);
+
     // =========================
     // 2️⃣ PARAMETRE OKU
     // =========================
@@ -32,6 +34,9 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
 
     double max_range =
         this->get_parameter("scan.max_range").as_double();
+
+    debug_rviz_enabled_ =
+        this->get_parameter("debug.enable_rviz").as_bool();
 
     // =========================
     // 3️⃣ CORE NESNELERİNİ OLUŞTUR
@@ -48,7 +53,16 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
     obstacle_detector_->setDangerDistance(danger_distance);
 
     // =========================
-    // 4️⃣ ROS I/O
+    // 4️⃣ RVIZ DEBUG (opsiyonel)
+    // =========================
+    if (debug_rviz_enabled_) {
+        rviz_debug_pub_ =
+            std::make_unique<
+                hamals_lidar_toolbox::ros::rviz::RvizDebugPublisher>(*this);
+    }
+
+    // =========================
+    // 5️⃣ ROS I/O
     // =========================
     scan_subscriber_ =
         this->create_subscription<sensor_msgs::msg::LaserScan>(
@@ -60,7 +74,10 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
         this->create_publisher<hamals_lidar_msgs::msg::ObstacleState>(
             "/scan/obstacle_state", 10);
 
-    RCLCPP_INFO(this->get_logger(), "ScanProcessorNode started (config-driven).");
+    RCLCPP_INFO(
+        this->get_logger(),
+        "ScanProcessorNode started (config-driven, rviz=%s).",
+        debug_rviz_enabled_ ? "ON" : "OFF");
 }
 
 void ScanProcessorNode::scanCallback(
@@ -84,7 +101,24 @@ void ScanProcessorNode::scanCallback(
     auto obstacle_map =
         obstacle_detector_->detect(metrics);
 
-    // 6️⃣ ROS msg
+    // =========================
+    // 6️⃣ RVIZ DEBUG (FAZ 4.2)
+    // =========================
+    if (debug_rviz_enabled_ && rviz_debug_pub_)
+    {
+        const auto& front_state = obstacle_map.at("front");
+
+        rviz_debug_pub_->publishFrontFan(
+            this->get_parameter("regions.front.min").as_double(),
+            this->get_parameter("regions.front.max").as_double(),
+            this->get_parameter("danger_distance").as_double(),
+            front_state.has_obstacle
+        );
+    }
+
+    // =========================
+    // 7️⃣ ROS MSG
+    // =========================
     hamals_lidar_msgs::msg::ObstacleState out_msg;
 
     for (const auto& [region, state] : obstacle_map)
@@ -128,16 +162,11 @@ ScanProcessorNode::createRegionsFromParams() const
     };
 }
 
-
 int main(int argc, char ** argv)
 {
     rclcpp::init(argc, argv);
-
     auto node = std::make_shared<ScanProcessorNode>();
-
     rclcpp::spin(node);
-
     rclcpp::shutdown();
     return 0;
 }
-
