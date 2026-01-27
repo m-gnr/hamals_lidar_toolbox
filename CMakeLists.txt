@@ -16,10 +16,11 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(hamals_lidar_msgs REQUIRED)
 
 # =========================
-# Core library (ROS'suz)
+# Core library (ROS-independent)
 # =========================
 add_library(hamals_lidar_toolbox_core
   src/core/ScanData.cpp
@@ -31,22 +32,22 @@ add_library(hamals_lidar_toolbox_core
 
 target_include_directories(hamals_lidar_toolbox_core
   PUBLIC
-    include
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 # =========================
-# ROS library (adapter + rviz)
+# ROS library (adapters + rviz)
 # =========================
 add_library(hamals_lidar_toolbox_ros
-  ros/adapters/LaserScanAdapter.cpp
-  ros/rviz/RvizDebugPublisher.cpp
+  src/ros/adapters/LaserScanAdapter.cpp
+  src/ros/rviz/RvizDebugPublisher.cpp
 )
 
 target_include_directories(hamals_lidar_toolbox_ros
   PUBLIC
-    include
-  PRIVATE
-    ros
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 ament_target_dependencies(hamals_lidar_toolbox_ros
@@ -61,10 +62,16 @@ target_link_libraries(hamals_lidar_toolbox_ros
 )
 
 # =========================
-# Scan processor node (EXECUTABLE)
+# Scan processor node (executable)
 # =========================
 add_executable(scan_processor_node
-  ros/nodes/scan_processor_node.cpp
+  src/ros/nodes/scan_processor_node.cpp
+)
+
+target_include_directories(scan_processor_node
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 ament_target_dependencies(scan_processor_node
@@ -79,14 +86,17 @@ target_link_libraries(scan_processor_node
 )
 
 # =========================
-# Install targets
+# Install
 # =========================
 install(
   TARGETS
     hamals_lidar_toolbox_core
     hamals_lidar_toolbox_ros
     scan_processor_node
-  DESTINATION lib/${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(
@@ -105,7 +115,20 @@ install(
 )
 
 # =========================
-# Testing (lint)
+# Export targets
+# =========================
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_include_directories(include)
+ament_export_dependencies(
+  rclcpp
+  sensor_msgs
+  visualization_msgs
+  geometry_msgs
+  hamals_lidar_msgs
+)
+
+# =========================
+# Testing
 # =========================
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -1,4 +1,4 @@
-#include "scan_processor_node.hpp"
+#include "hamals_lidar_toolbox/ros/nodes/scan_processor_node.hpp"
 
 using std::placeholders::_1;
 
