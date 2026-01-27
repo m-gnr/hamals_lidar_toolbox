@@ -78,5 +78,5 @@ private:
 
     std::unique_ptr<
         hamals_lidar_toolbox::ros::rviz::RvizDebugPublisher
-    > rviz_debug_pub_;
+    > rviz_debug_;
 };

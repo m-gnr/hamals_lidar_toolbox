@@ -39,7 +39,7 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
         this->get_parameter("debug.enable_rviz").as_bool();
 
     // =========================
-    // 3️⃣ CORE NESNELERİNİ OLUŞTUR
+    // 3️⃣ CORE NESNELERİ
     // =========================
     sanitizer_ = std::make_unique<
         hamals_lidar_toolbox::core::ScanSanitizer>(min_range, max_range);
@@ -55,10 +55,10 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
     // =========================
     // 4️⃣ RVIZ DEBUG (opsiyonel)
     // =========================
-    if (debug_rviz_enabled_) {
-        rviz_debug_pub_ =
-            std::make_unique<
-                hamals_lidar_toolbox::ros::rviz::RvizDebugPublisher>(*this);
+    if (debug_rviz_enabled_)
+    {
+        rviz_debug_ = std::make_unique<
+            hamals_lidar_toolbox::ros::rviz::RvizDebugPublisher>(*this);
     }
 
     // =========================
@@ -76,7 +76,7 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
 
     RCLCPP_INFO(
         this->get_logger(),
-        "ScanProcessorNode started (config-driven, rviz=%s).",
+        "ScanProcessorNode started (rviz debug = %s)",
         debug_rviz_enabled_ ? "ON" : "OFF");
 }
 
@@ -102,18 +102,23 @@ void ScanProcessorNode::scanCallback(
         obstacle_detector_->detect(metrics);
 
     // =========================
-    // 6️⃣ RVIZ DEBUG (FAZ 4.2)
+    // 6️⃣ RVIZ DEBUG – TÜM REGION’LAR
     // =========================
-    if (debug_rviz_enabled_ && rviz_debug_pub_)
+    if (debug_rviz_enabled_ && rviz_debug_)
     {
-        const auto& front_state = obstacle_map.at("front");
+        for (const auto& [region_name, state] : obstacle_map)
+        {
+            const std::string min_key = "regions." + region_name + ".min";
+            const std::string max_key = "regions." + region_name + ".max";
 
-        rviz_debug_pub_->publishFrontFan(
-            this->get_parameter("regions.front.min").as_double(),
-            this->get_parameter("regions.front.max").as_double(),
-            this->get_parameter("danger_distance").as_double(),
-            front_state.has_obstacle
-        );
+            rviz_debug_->publishRegionFan(
+                region_name,
+                this->get_parameter(min_key).as_double(),
+                this->get_parameter(max_key).as_double(),
+                state.min_distance,        // gerçek ölçülen mesafe
+                state.has_obstacle
+            );
+        }
     }
 
     // =========================

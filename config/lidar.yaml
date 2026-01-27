@@ -20,7 +20,7 @@ scan_processor_node:
         max: -0.52
       rear:
         min:  2.09
-        max:  3.14
+        max:  -2.09
     
     debug:
       enable_rviz: true

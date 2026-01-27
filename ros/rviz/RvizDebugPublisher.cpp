@@ -1,6 +1,11 @@
 #include "hamals_lidar_toolbox/ros/rviz/RvizDebugPublisher.hpp"
 
 #include <cmath>
+#include <string>
+
+#include <geometry_msgs/msg/point.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+
 
 namespace hamals_lidar_toolbox::ros::rviz
 {
@@ -17,7 +22,13 @@ void RvizDebugPublisher::publishEmpty()
   pub_->publish(arr);
 }
 
-void RvizDebugPublisher::publishFrontFan(
+// =======================================================
+// 🔧 Yardımcı: Tek bir fan marker üretir (publish ETMEZ)
+// =======================================================
+visualization_msgs::msg::Marker
+RvizDebugPublisher::createFanMarker(
+    const std::string& ns,
+    int id,
     double angle_min,
     double angle_max,
     double radius,
@@ -28,15 +39,14 @@ void RvizDebugPublisher::publishFrontFan(
   fan.header.frame_id = "base_link";
   fan.header.stamp = rclcpp::Clock().now();
 
-  fan.ns = "front_fan";
-  fan.id = 0;
+  fan.ns = ns;
+  fan.id = id;
 
   fan.type = visualization_msgs::msg::Marker::LINE_STRIP;
   fan.action = visualization_msgs::msg::Marker::ADD;
+  fan.scale.x = 0.03;
 
-  fan.scale.x = 0.03;  // çizgi kalınlığı
-
-  // renk
+  // 🎨 Renk
   if (has_obstacle) {
     fan.color.r = 1.0;
     fan.color.g = 0.0;
@@ -47,7 +57,7 @@ void RvizDebugPublisher::publishFrontFan(
   fan.color.b = 0.0;
   fan.color.a = 1.0;
 
-  // merkez
+  // Merkez
   geometry_msgs::msg::Point center;
   center.x = 0.0;
   center.y = 0.0;
@@ -69,10 +79,59 @@ void RvizDebugPublisher::publishFrontFan(
     fan.points.push_back(p);
   }
 
+  // Fan kapama
   fan.points.push_back(center);
 
+  return fan;
+}
+
+// =======================================================
+// 🎯 Ana fonksiyon: region fan (wrap-aware)
+// =======================================================
+void RvizDebugPublisher::publishRegionFan(
+    const std::string& region_name,
+    double angle_min,
+    double angle_max,
+    double radius,
+    bool has_obstacle)
+{
   visualization_msgs::msg::MarkerArray arr;
-  arr.markers.push_back(fan);
+
+  if (angle_min <= angle_max)
+  {
+    // Normal fan
+    arr.markers.push_back(
+        createFanMarker(
+            region_name,
+            0,
+            angle_min,
+            angle_max,
+            radius,
+            has_obstacle));
+  }
+  else
+  {
+    // 🔁 WRAP CASE (rear gibi)
+    arr.markers.push_back(
+        createFanMarker(
+            region_name,
+            0,
+            angle_min,
+            M_PI,
+            radius,
+            has_obstacle));
+
+    arr.markers.push_back(
+        createFanMarker(
+            region_name,
+            1,
+            -M_PI,
+            angle_max,
+            radius,
+            has_obstacle));
+  }
+
+  // ⚠️ TEK SEFERDE publish (kritik nokta)
   pub_->publish(arr);
 }
 
