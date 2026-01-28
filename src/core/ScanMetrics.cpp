@@ -14,7 +14,6 @@ ScanMetrics::compute(
 {
     std::unordered_map<std::string, RegionMetrics> result;
 
-    // Tum bolgeler icin metrikleri hesapla
     for (const auto& pair : segments)
     {
         const std::string& region_name = pair.first;
@@ -22,7 +21,6 @@ ScanMetrics::compute(
 
         RegionMetrics metrics;
 
-        // Bolge bossa varsayilan degerler (count=0, min/mean=+inf) korunur
         if (indices.empty())
         {
             result[region_name] = metrics;
@@ -32,23 +30,18 @@ ScanMetrics::compute(
         double sum = 0.0;
         double min_val = std::numeric_limits<double>::infinity();
 
-        // Index listesine gore mesafeleri gez
         for (std::size_t idx : indices)
         {
-            // ScanData icindeki mesafe degerini al
             double distance = static_cast<double>(scan.ranges()[idx]);
 
-            // En kucuk mesafeyi guncelle
             if (distance < min_val)
             {
                 min_val = distance;
             }
 
-            // Ortalama icin toplami guncelle
             sum += distance;
         }
 
-        // Metrikleri doldur
         metrics.count = indices.size();
         metrics.min_distance = min_val;
         metrics.mean_distance = sum / static_cast<double>(indices.size());

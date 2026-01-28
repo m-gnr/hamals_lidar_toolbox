@@ -15,10 +15,8 @@ class RvizDebugPublisher
 public:
   explicit RvizDebugPublisher(rclcpp::Node& node);
 
-  /// Tüm marker’ları temizlemek için boş publish
   void publishEmpty();
 
-  /// Tek bir region için fan (wrap-aware)
   void publishRegionFan(
       const std::string& region_name,
       double angle_min,
@@ -27,7 +25,6 @@ public:
       bool has_obstacle);
 
 private:
-  /// Tek bir fan marker üretir (publish etmez)
   visualization_msgs::msg::Marker createFanMarker(
       const std::string& ns,
       int id,

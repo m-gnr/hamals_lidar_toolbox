@@ -5,9 +5,6 @@ using std::placeholders::_1;
 ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
 : rclcpp::Node("scan_processor_node", options)
 {
-    // =========================
-    // 1️⃣ PARAMETRE DECLARE
-    // =========================
     this->declare_parameter<double>("danger_distance");
     this->declare_parameter<double>("scan.min_range");
     this->declare_parameter<double>("scan.max_range");
@@ -23,9 +20,6 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
 
     this->declare_parameter<bool>("debug.enable_rviz", false);
 
-    // =========================
-    // 2️⃣ PARAMETRE OKU
-    // =========================
     double danger_distance =
         this->get_parameter("danger_distance").as_double();
 
@@ -38,9 +32,6 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
     debug_rviz_enabled_ =
         this->get_parameter("debug.enable_rviz").as_bool();
 
-    // =========================
-    // 3️⃣ CORE NESNELERİ
-    // =========================
     sanitizer_ = std::make_unique<
         hamals_lidar_toolbox::core::ScanSanitizer>(min_range, max_range);
 
@@ -52,18 +43,12 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
 
     obstacle_detector_->setDangerDistance(danger_distance);
 
-    // =========================
-    // 4️⃣ RVIZ DEBUG (opsiyonel)
-    // =========================
     if (debug_rviz_enabled_)
     {
         rviz_debug_ = std::make_unique<
             hamals_lidar_toolbox::ros::rviz::RvizDebugPublisher>(*this);
     }
 
-    // =========================
-    // 5️⃣ ROS I/O
-    // =========================
     scan_subscriber_ =
         this->create_subscription<sensor_msgs::msg::LaserScan>(
             "/scan",
@@ -83,27 +68,19 @@ ScanProcessorNode::ScanProcessorNode(const rclcpp::NodeOptions& options)
 void ScanProcessorNode::scanCallback(
     const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-    // 1️⃣ ROS -> Core
     auto scan =
         hamals_lidar_toolbox::ros::adapters::LaserScanAdapter::fromRosMessage(*msg);
 
-    // 2️⃣ Sanitize
     auto clean_scan = sanitizer_->sanitize(scan);
 
-    // 3️⃣ Segment
     auto segments = segmenter_->segment(clean_scan);
 
-    // 4️⃣ Metrics
     auto metrics =
         hamals_lidar_toolbox::core::ScanMetrics::compute(clean_scan, segments);
 
-    // 5️⃣ Obstacle detection
     auto obstacle_map =
         obstacle_detector_->detect(metrics);
 
-    // =========================
-    // 6️⃣ RVIZ DEBUG – TÜM REGION’LAR
-    // =========================
     if (debug_rviz_enabled_ && rviz_debug_)
     {
         for (const auto& [region_name, state] : obstacle_map)
@@ -115,15 +92,12 @@ void ScanProcessorNode::scanCallback(
                 region_name,
                 this->get_parameter(min_key).as_double(),
                 this->get_parameter(max_key).as_double(),
-                state.min_distance,        // gerçek ölçülen mesafe
+                state.min_distance,
                 state.has_obstacle
             );
         }
     }
 
-    // =========================
-    // 7️⃣ ROS MSG
-    // =========================
     hamals_lidar_msgs::msg::ObstacleState out_msg;
 
     for (const auto& [region, state] : obstacle_map)

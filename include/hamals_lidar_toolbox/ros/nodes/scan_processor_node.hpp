@@ -16,43 +16,17 @@
 #include <memory>
 #include <vector>
 
-/**
- * @brief /scan verisini core pipeline'a baglayan ROS2 node'u
- *
- * Bu node:
- *  - /scan topic'ini dinler
- *  - LaserScanAdapter ile ROS mesajini core ScanData'ya cevirir
- *  - Core pipeline'i calistirir
- *  - Engel durumunu publish eder
- *
- * Bu sinif:
- *  - Algoritma icermez
- *  - Sadece orkestrasyon yapar
- */
 class ScanProcessorNode : public rclcpp::Node
 {
 public:
-    /**
-     * @brief ScanProcessorNode constructor
-     */
     explicit ScanProcessorNode(
         const rclcpp::NodeOptions& options = rclcpp::NodeOptions());
 
 private:
-    /**
-     * @brief Config parametrelerinden bolge tanimlarini olusturur
-     */
     std::vector<hamals_lidar_toolbox::core::ScanSegmenter::Region>
     createRegionsFromParams() const;
 
-    /**
-     * @brief /scan callback fonksiyonu
-     */
     void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
-
-    // =========================
-    // ROS iletisim bilesenleri
-    // =========================
 
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr
         scan_subscriber_;
@@ -61,18 +35,9 @@ private:
         hamals_lidar_msgs::msg::ObstacleState
     >::SharedPtr obstacle_state_pub_;
 
-    // =========================
-    // Core pipeline bilesenleri
-    // (parametre okunduktan sonra olusturulur)
-    // =========================
-
     std::unique_ptr<hamals_lidar_toolbox::core::ScanSanitizer> sanitizer_;
     std::unique_ptr<hamals_lidar_toolbox::core::ScanSegmenter> segmenter_;
     std::unique_ptr<hamals_lidar_toolbox::core::ObstacleDetector> obstacle_detector_;
-
-    // =========================
-    // RViz Debug (FAZ 4)
-    // =========================
 
     bool debug_rviz_enabled_{false};
 

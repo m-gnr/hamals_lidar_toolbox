@@ -22,9 +22,7 @@ void RvizDebugPublisher::publishEmpty()
   pub_->publish(arr);
 }
 
-// =======================================================
-// 🔧 Yardımcı: Tek bir fan marker üretir (publish ETMEZ)
-// =======================================================
+
 visualization_msgs::msg::Marker
 RvizDebugPublisher::createFanMarker(
     const std::string& ns,
@@ -46,7 +44,6 @@ RvizDebugPublisher::createFanMarker(
   fan.action = visualization_msgs::msg::Marker::ADD;
   fan.scale.x = 0.03;
 
-  // 🎨 Renk
   if (has_obstacle) {
     fan.color.r = 1.0;
     fan.color.g = 0.0;
@@ -57,7 +54,6 @@ RvizDebugPublisher::createFanMarker(
   fan.color.b = 0.0;
   fan.color.a = 1.0;
 
-  // Merkez
   geometry_msgs::msg::Point center;
   center.x = 0.0;
   center.y = 0.0;
@@ -79,15 +75,11 @@ RvizDebugPublisher::createFanMarker(
     fan.points.push_back(p);
   }
 
-  // Fan kapama
   fan.points.push_back(center);
 
   return fan;
 }
 
-// =======================================================
-// 🎯 Ana fonksiyon: region fan (wrap-aware)
-// =======================================================
 void RvizDebugPublisher::publishRegionFan(
     const std::string& region_name,
     double angle_min,
@@ -99,7 +91,6 @@ void RvizDebugPublisher::publishRegionFan(
 
   if (angle_min <= angle_max)
   {
-    // Normal fan
     arr.markers.push_back(
         createFanMarker(
             region_name,
@@ -111,7 +102,6 @@ void RvizDebugPublisher::publishRegionFan(
   }
   else
   {
-    // 🔁 WRAP CASE (rear gibi)
     arr.markers.push_back(
         createFanMarker(
             region_name,
@@ -131,7 +121,6 @@ void RvizDebugPublisher::publishRegionFan(
             has_obstacle));
   }
 
-  // ⚠️ TEK SEFERDE publish (kritik nokta)
   pub_->publish(arr);
 }
 
