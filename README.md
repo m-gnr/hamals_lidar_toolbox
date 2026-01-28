@@ -55,7 +55,7 @@ Daha karmaşık karar mekanizmalarının ayrı ROS düğümleri olarak genellikl
 - Rviz için bölge bazlı fan görselleştirmesi
 - Danger/safe durumlarının anlık takibi
 
-                                   **Region-based safety visualization (real-time)**
+**Region-based safety visualization (real-time)**
 
 ![RViz region-based safety visualization](docs/rviz_regions.gif)
 
@@ -228,3 +228,4 @@ Her bölge, RViz üzerinde fan (sector) şeklinde çizilir:
 
 **Bu topic karar mekanizmaları tarafından tüketilmez.
 Sadece geliştiriciye geri bildirim vermek içindir.**
+
