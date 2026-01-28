@@ -1,8 +1,8 @@
 scan_processor_node:
   ros__parameters:
 
-    # Genel eşikler
-    danger_distance: 0.7
+    
+    danger_distance: 0.3
 
     scan:
       min_range: 0.05
