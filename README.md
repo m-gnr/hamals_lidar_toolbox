@@ -165,11 +165,12 @@ ros2 launch hamals_lidar_toolbox scan_processor.launch.py
 
 # Bağımlılıklar
 
-- ROS2
+- ROS 2
 - rclcpp
 - sensor_msgs
 - visualization_msgs
-- **hamals_lidar_msgs**
+- **[hamals_lidar_msgs](https://github.com/m-gnr/hamals_lidar_msgs)** – Custom LiDAR message definitions
+
 
 # Node & Topic Akışı
 
@@ -228,4 +229,5 @@ Her bölge, RViz üzerinde fan (sector) şeklinde çizilir:
 
 **Bu topic karar mekanizmaları tarafından tüketilmez.
 Sadece geliştiriciye geri bildirim vermek içindir.**
+
 
