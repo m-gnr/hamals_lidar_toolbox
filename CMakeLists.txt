@@ -1,38 +1,20 @@
 cmake_minimum_required(VERSION 3.8)
 project(hamals_lidar_toolbox)
 
-<<<<<<< HEAD
-=======
 # =========================
 # Compiler options
 # =========================
->>>>>>> develop
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-<<<<<<< HEAD
-# find dependencies
-=======
 # =========================
 # Find dependencies
 # =========================
->>>>>>> develop
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-<<<<<<< HEAD
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-=======
 find_package(visualization_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(hamals_lidar_msgs REQUIRED)
@@ -80,7 +62,7 @@ target_link_libraries(hamals_lidar_toolbox_ros
 )
 
 # =========================
-# Scan processor node (executable)
+# Scan processor node
 # =========================
 add_executable(scan_processor_node
   src/ros/nodes/scan_processor_node.cpp
@@ -151,7 +133,6 @@ ament_export_dependencies(
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
->>>>>>> develop
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
