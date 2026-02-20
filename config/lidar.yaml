@@ -2,25 +2,28 @@ scan_processor_node:
   ros__parameters:
 
     
-    danger_distance: 0.3
+    danger_distance: 0.17
 
     scan:
-      min_range: 0.05
+      min_range: 0.12
       max_range: 30.0
 
     regions:
       front:
-        min: -0.52
-        max:  0.52
+        min: -0.785    # -45°
+        max:  0.785    # +45°
+
       left:
-        min:  0.52
-        max:  2.09
+        min:  0.785
+        max:  2.356    # 135°
+
       right:
-        min: -2.09
-        max: -0.52
+        min: -2.356
+        max: -0.785
+
       rear:
-        min:  2.09
-        max:  -2.09
-    
+        min:  2.356
+        max: -2.356
+        
     debug:
       enable_rviz: true
